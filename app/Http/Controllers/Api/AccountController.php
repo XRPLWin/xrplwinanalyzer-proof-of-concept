@@ -1,12 +1,23 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class ApiController extends Controller
+class AccountController extends Controller
 {
-    public function ott_token_array(string $token)
+
+  public function account()
+  {
+    return response()->json(['test' => 123]);
+  }
+
+
+
+
+
+    /*public function ott_token_array(string $token)
     {
 
       $client = new \GuzzleHttp\Client();
@@ -35,5 +46,5 @@ class ApiController extends Controller
       abort(404);
 
       return response()->json($token);
-    }
+    }*/
 }

@@ -18,3 +18,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 */
+
+
+Route::get('/', [App\Http\Controllers\Api\InfoController::class, 'info'])->name('info');
