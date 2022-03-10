@@ -67,6 +67,14 @@ of available nodes. First successful find will be on "Analyzer 1", stream downlo
 
 Analyzer 2 then parses and inserts/updates local database.
 
+## Requirements
+
+* Web server (Nginx)
+* PHP 7.4.x
+* MySQL DB
+* Redis
+* Varnish v4 with Tags support (optional)
+
 ## Caching
 
 Although it is possible to cache responses in various ways it is recommended to use Redis for internal caching and
