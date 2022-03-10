@@ -14,7 +14,28 @@ XRPLWin Analyzer is software which analyzes and organizes XRPLedger data.
 Data is fetched and stored in local/cloud database to easy access. Once data is fetched it will not
 query Ledger again for the same queries, this will mitigate unnecessary requests to XRPL.
 
+### Account historical value
 
+With analyzed transactions it is easy to get historical value of specific account, draw graph and pin-point
+incoming transactions. This will help users to calculate gains over time for TAX purposes, viewing gains/losses etc...
+
+### Account connections (scam detection)
+
+Find which accounts are connected to other accounts. This data will help to identify Token owners back to source of created account.
+
+Token scamming is serious problem and via this feature by analyzing Issuer account, those connections will be revealed.
+For example: It is possible to detect which tokens are issued same owner via direct method like account creator or indirect like 
+cold/hot wallets owners, and/or who holds majority (see rules) of tokens.
+
+Point is to analyze issuers and output warnings if those tokens are in connection to "Blacklisted" account.
+
+### Blacklisting and account local metadata
+
+With account (r...) there will be local metadata connected and stored in local DB. This can contain various notes and comments.
+
+### Custom rules
+
+Rules will allow fine tunning when detecting connections between accounts.
 
 ## Analyzed data sharing
 
