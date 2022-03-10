@@ -1,61 +1,49 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# XRPLWin Analyzer
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+## Motivation
 
-## About Laravel
+When working on xrpl.win website it has shown it is hard to get aggregated data of specific account
+without querying XRPL by using markers. To show account value history and draw a graph, one needs to
+fetch all account transactions, parse them and cherry pick to show some coherent data. 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Doing analytics like connection between two accounts and or issuer accounts is also farly CPU time expensive.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## About
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+XRPLWin Analyzer is software which analyzes and organizes XRPLedger data.
+Data is fetched and stored in local/cloud database to easy access. Once data is fetched it will not
+query Ledger again for the same queries, this will mitigate unnecessary requests to XRPL.
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Analyzed data sharing
 
-## Laravel Sponsors
+For each analyzed account some time is allocated for that work to be done, this can be resource expensive for
+analyzer server and for XRPLedger.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+When running multiple instances (nodes) of XRPLWin Analyzer, (eg. official hosted on analyzer.xrpl.win and your own),
+it is possible to pull analyzed data from other nodes in an efficient manner via JSON data dumps. For this to work both
+instances need to be on same version and same code HASH.
 
-### Premium Partners
+For each instance to be aware of others, there will be official registry of nodes hosted by xrpl.win.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[OP.GG](https://op.gg)**
+### Example
 
-## Contributing
+Analyzer 1 (analyzer.xrpl.win) analyzes rACCOUNT...1 and finishes after X minutes/hours.
+Analyzer 2 (foo.example.com) needs analyzed data of rACCOUNT...1, instead of going to ledger it can lookup that account on each
+of available nodes. First sucessfull find will be on "Analyzer 1", stream download will be pulled via e.g. https://analyzer.xrpl.win/account/rACCOUNT...1/dump.json
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Analyzer 2 then parses and inserts/updates local database.
 
-## Code of Conduct
+## Caching
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Although it is possible to cache responses in various ways it is recommended to use Redis for internal caching and
+Varnish for REST Api responses.
 
-## Security Vulnerabilities
+## Bug reports
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+If you discover a bugs within XRPLWin Analyzer, please send an e-mail to XRPLWin via [info@xrplwin.com](mailto:info@xrplwin.com).
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+XRPLWin Analyzer is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
