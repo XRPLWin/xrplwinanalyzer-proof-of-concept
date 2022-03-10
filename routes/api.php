@@ -21,3 +21,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 
 Route::get('/', [App\Http\Controllers\Api\InfoController::class, 'info'])->name('info');
+Route::get('/account_info/{account}', [App\Http\Controllers\Api\AccountController::class, 'info'])->name('account.info');
+Route::get('/account_tx/{account}', [App\Http\Controllers\Api\AccountController::class, 'tx'])->name('account.tx');
