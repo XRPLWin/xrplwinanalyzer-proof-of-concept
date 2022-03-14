@@ -10,7 +10,7 @@ use App\Models\Account as AccountModel;
 class Account
 {
 
-  public static function CreateEmpty($address, $current_ledger)
+  public static function GetOrCreate($address, $current_ledger)
   {
     $check = AccountModel::where('account',$address)->count();
     if($check)
@@ -23,7 +23,7 @@ class Account
       ])->where('account',$address)->first();
       return $account;
     }
-    
+
     $account = new AccountModel;
     $account->account = $address;
     $account->ledger_first_index = $current_ledger;

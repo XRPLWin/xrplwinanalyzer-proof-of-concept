@@ -35,6 +35,7 @@ class XrplAccountSync extends Command
         parent::__construct();
     }
 
+    private $current_ledger;
     /**
      * Execute the console command.
      *
@@ -43,7 +44,7 @@ class XrplAccountSync extends Command
     public function handle()
     {
       $address = $this->argument('address');
-      $current_ledger = XRPL::ledger_current();
+      $this->current_ledger = XRPL::ledger_current();
 
 
       //validate $account format
@@ -58,10 +59,10 @@ class XrplAccountSync extends Command
 
       if(!$account)
       {
-        $account = StaticAccount::CreateEmpty($address,$current_ledger);
+        $account = StaticAccount::GetOrCreate($address,$this->current_ledger);
       }
 
-      $account->ledger_last_index = $current_ledger;
+      $account->ledger_last_index = $this->current_ledger;
 
       //TODO adjust ledger indexes and put to account_tx
 
@@ -102,29 +103,31 @@ class XrplAccountSync extends Command
     */
     private function processTransaction_Payment(Account $account, array $tx)
     {
-
-      $this->info($tx['Destination'].' '.$tx['Account']);
-      return;
       $txhash = $tx['hash'];
+      // Check existing tx
+      $TransactionPaymentCheck = TransactionPayment::where('txhash',$txhash)->count();
+      if($TransactionPaymentCheck)
+        return null; //nothing to do, already stored
 
-      $address2 = $tx['Destination'];
-      if($account->account == $tx['Destination'])
+      if($account->account == $tx['Account'])
       {
-        $address2 = $tx['Account'];
+        $source_account = $account;
+        $destination_account = StaticAccount::GetOrCreate($tx['Destination'],$this->current_ledger);
+      }
+      else
+      {
+        $source_account = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger);
+        $destination_account = $account;
       }
 
-    //  if(!is_array($tx['Amount']))
-      //  dd($tx,$account,$address2);
-
-      // Check existing tx
-      $TransactionPaymentCheck = TransactionPayment::where('txhash',$hash)->count();
-      if($TransactionPaymentCheck)
-        return null; //nothing to do
 
       $TransactionPayment = new TransactionPayment;
       $TransactionPayment->txhash = $txhash;
-      $TransactionPayment->source_account_id = $txhash;
-      $TransactionPayment->txhash = $tx['Destination'];
+      $TransactionPayment->source_account_id = $source_account->id;
+      $TransactionPayment->destination_account_id = $destination_account->id;
+      $TransactionPayment->save();
+
+      $this->info($tx['Destination'].' '.$tx['Account']);
 
       //if($destination == 'raTZKmBYyPQdMXsRcne95UMoUQKBvjLXPv')
       //  dd($tx);
