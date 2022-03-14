@@ -22,4 +22,7 @@ return [
   //'rippled_fullhistory_server_uri' => 'https://s.altnet.rippletest.net:51234'
 
   'token_source' => 'https://api.xrpldata.com/api/v1/tokens',
+
+  //min ledger index in existance
+  'genesis_ledger' => 32570
 ];

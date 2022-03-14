@@ -12,7 +12,9 @@ class InfoController extends Controller
   {
     return response()->json([
       'version' => config('xwin.version'),
-      'description' => 'XRPLWin Analyzer (https://xrpl.win)'
+      'description' => 'XRPLWin Analyzer',
+      'license' => 'ISC License',
+      'copyright' => 'Copyright (c) 2022, XRPLWin (https://xrpl.win)'
     ]);
   }
 }
