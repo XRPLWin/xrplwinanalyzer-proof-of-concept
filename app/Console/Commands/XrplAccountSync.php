@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Statics\XRPL;
+use App\Statics\Account as StaticAccount;
 use App\Models\Account;
 use App\Models\TransactionPayment;
 
@@ -57,9 +58,7 @@ class XrplAccountSync extends Command
 
       if(!$account)
       {
-        $account = new Account;
-        $account->account = $address;
-        $account->ledger_first_index = $current_ledger;
+        $account = StaticAccount::CreateEmpty($address,$current_ledger);
       }
 
       $account->ledger_last_index = $current_ledger;
@@ -75,7 +74,7 @@ class XrplAccountSync extends Command
         {
           foreach($txs['result']['transactions'] as $tx)
           {
-            $this->processTransaction($tx['tx']);
+            $this->processTransaction($account,$tx['tx']);
             $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
           }
         }
@@ -91,89 +90,116 @@ class XrplAccountSync extends Command
       return 0;
     }
 
-    private function processTransaction(array $tx)
+    private function processTransaction(Account $account, array $tx)
     {
       $type = $tx['TransactionType'];
       $method = 'processTransaction_'.$type;
-      return $this->{$method}($tx);
+      return $this->{$method}($account, $tx);
     }
 
     /**
     * Payment to or from in any currency.
     */
-    private function processTransaction_Payment(array $tx)
+    private function processTransaction_Payment(Account $account, array $tx)
     {
-      dd($tx);
+
+      $this->info($tx['Destination'].' '.$tx['Account']);
+      return;
+      $txhash = $tx['hash'];
+
+      $address2 = $tx['Destination'];
+      if($account->account == $tx['Destination'])
+      {
+        $address2 = $tx['Account'];
+      }
+
+    //  if(!is_array($tx['Amount']))
+      //  dd($tx,$account,$address2);
+
+      // Check existing tx
+      $TransactionPaymentCheck = TransactionPayment::where('txhash',$hash)->count();
+      if($TransactionPaymentCheck)
+        return null; //nothing to do
+
+      $TransactionPayment = new TransactionPayment;
+      $TransactionPayment->txhash = $txhash;
+      $TransactionPayment->source_account_id = $txhash;
+      $TransactionPayment->txhash = $tx['Destination'];
+
+      //if($destination == 'raTZKmBYyPQdMXsRcne95UMoUQKBvjLXPv')
+      //  dd($tx);
+      $this->info($tx['Destination']);
+    //  dd($tx);
       return null;
     }
 
 
-    private function processTransaction_OfferCreate(array $tx)
+    private function processTransaction_OfferCreate(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_OfferCancel(array $tx)
+    private function processTransaction_OfferCancel(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_TrustSet(array $tx)
+    private function processTransaction_TrustSet(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_AccountSet(array $tx)
+    private function processTransaction_AccountSet(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_AccountDelete(array $tx)
+    private function processTransaction_AccountDelete(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_SetRegularKey(array $tx)
+    private function processTransaction_SetRegularKey(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_SignerListSet(array $tx)
+    private function processTransaction_SignerListSet(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_EscrowCreate(array $tx)
+    private function processTransaction_EscrowCreate(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_EscrowFinish(array $tx)
+    private function processTransaction_EscrowFinish(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_EscrowCancel(array $tx)
+    private function processTransaction_EscrowCancel(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelCreate(array $tx)
+    private function processTransaction_PaymentChannelCreate(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelFund(array $tx)
+    private function processTransaction_PaymentChannelFund(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelClaim(array $tx)
+    private function processTransaction_PaymentChannelClaim(Account $account, array $tx)
     {
       return null;
     }
 
-    private function processTransaction_DepositPreauth(array $tx)
+    private function processTransaction_DepositPreauth(Account $account, array $tx)
     {
       return null;
     }
