@@ -23,7 +23,7 @@ class XRPL
           ]
         ]*/
       ];
-    $response = $client->request('POST', config('xrpl.rippled_server_uri'), [
+    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_server_uri'), [
       'body' => json_encode( $body ),
       'headers' => [
         //'Accept' => 'application/json',
@@ -50,7 +50,7 @@ class XRPL
           ]
         ]
       ];
-    $response = $client->request('POST', config('xrpl.rippled_server_uri'), [
+    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_server_uri'), [
       'body' => json_encode( $body ),
       'headers' => [
         //'Accept' => 'application/json',
@@ -92,7 +92,7 @@ class XRPL
       $body['params'][0]['marker'] = $marker;
     }
 
-    $response = $client->request('POST', config('xrpl.rippled_fullhistory_server_uri'), [
+    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_fullhistory_server_uri'), [
       'body' => json_encode( $body ),
       'headers' => [
         //'Accept' => 'application/json',
@@ -133,7 +133,7 @@ class XRPL
       $body['params'][0]['marker'] = $marker;
     }
     //dd(json_encode( $body ));
-    $response = $client->request('POST', config('xrpl.rippled_server_uri'), [
+    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_server_uri'), [
       'body' => json_encode( $body ),
       'headers' => [
         //'Accept' => 'application/json',
@@ -179,7 +179,7 @@ class XRPL
       ]
     ];
     //dd(json_encode( $body ));
-    $response = $client->request('POST', config('xrpl.rippled_fullhistory_server_uri'), [
+    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_fullhistory_server_uri'), [
       'body' => json_encode( $body ),
       'headers' => [
         //'Accept' => 'application/json',
