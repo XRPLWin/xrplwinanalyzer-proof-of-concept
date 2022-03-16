@@ -18,7 +18,7 @@ class CreateAccountsTable extends Migration
             $table->string('account',100)->collation('utf8_bin')->unique();
             $table->bigInteger('ledger_first_index'); //last synced ledger
             $table->bigInteger('ledger_last_index');  //first synced ledger
-
+            $table->boolean('is_history_synced')->default(false);
             $table->index('account');
         });
     }

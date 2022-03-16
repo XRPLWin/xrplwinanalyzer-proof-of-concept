@@ -10,9 +10,19 @@ class Account extends Model
 {
   public $timestamps = false;
 
+  /**
+   * The attributes that should be cast to native types.
+   *
+   * @var array
+   */
+  protected $casts = [
+      'is_history_synced' => 'boolean',
+  ];
+
   public function isHistorySynced() : bool
   {
-    return !($this->ledger_first_index > config('xrpl.genesis_ledger'));
+    return $this->is_history_synced;
+    //return !($this->ledger_first_index > config('xrpl.genesis_ledger'));
   }
 
   public function sync()

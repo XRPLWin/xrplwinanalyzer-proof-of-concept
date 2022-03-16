@@ -7,6 +7,8 @@ use App\Statics\XRPL;
 use App\Statics\Account as StaticAccount;
 use App\Models\Account;
 use App\Models\TransactionPayment;
+use App\Models\TransactionTrustset;
+use App\Models\TransactionAccountset;
 
 
 class XrplAccountSync extends Command
@@ -68,6 +70,7 @@ class XrplAccountSync extends Command
 
       $account->save();
       $marker = null;
+      $is_history_synced = false;
       $do = true;
       while($do) {
         $txs = XRPL::account_tx($address,-1,-1,$marker);
@@ -77,15 +80,34 @@ class XrplAccountSync extends Command
           {
             $this->processTransaction($account,$tx['tx']);
             $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
+            $account->ledger_first_index = $tx['tx']['ledger_index'];
           }
         }
         else
+        {
+          //something failed
+          $is_history_synced = false;
           $do = false;
+        }
+
 
         if(!isset($txs['result']['marker']))
+        {
+          //end reached
+          $is_history_synced = true;
           $do = false;
+        }
         else
           $marker = $txs['result']['marker'];
+      }
+
+      $account->is_history_synced = $is_history_synced;
+      $account->save();
+
+
+      if($account->is_history_synced)
+      {
+        //handle event after full history pull for account
       }
 
       return 0;
@@ -104,6 +126,10 @@ class XrplAccountSync extends Command
     private function processTransaction_Payment(Account $account, array $tx)
     {
       $txhash = $tx['hash'];
+      $destination_tag = isset($tx['DestinationTag']) ? $tx['DestinationTag']:null;
+      $source_tag = isset($tx['SourceTag']) ? $tx['SourceTag']:null;
+      //$this->info($tx['DestinationTag']);
+      //dd($tx);
       // Check existing tx
       $TransactionPaymentCheck = TransactionPayment::where('txhash',$txhash)->count();
       if($TransactionPaymentCheck)
@@ -120,19 +146,30 @@ class XrplAccountSync extends Command
         $destination_account = $account;
       }
 
-
       $TransactionPayment = new TransactionPayment;
       $TransactionPayment->txhash = $txhash;
       $TransactionPayment->source_account_id = $source_account->id;
       $TransactionPayment->destination_account_id = $destination_account->id;
+      $TransactionPayment->destination_tag = $destination_tag;
+      $TransactionPayment->source_tag = $source_tag;
+      $TransactionPayment->fee = $tx['Fee']; //in drops
+      if(is_array($tx['Amount']))
+      {
+        //it is payment in currency
+        $TransactionPayment->amount = $tx['Amount']['value'];
+        $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+        $TransactionPayment->currency = $tx['Amount']['currency'];
+      }
+      else
+      {
+        //it is payment in XRP
+        $TransactionPayment->amount = drops_to_xrp($tx['Amount']);
+        $TransactionPayment->issuer_account_id = null;
+        $TransactionPayment->currency = '';
+      }
+
       $TransactionPayment->save();
-
       $this->info($tx['Destination'].' '.$tx['Account']);
-
-      //if($destination == 'raTZKmBYyPQdMXsRcne95UMoUQKBvjLXPv')
-      //  dd($tx);
-      $this->info($tx['Destination']);
-    //  dd($tx);
       return null;
     }
 
@@ -149,11 +186,62 @@ class XrplAccountSync extends Command
 
     private function processTransaction_TrustSet(Account $account, array $tx)
     {
+      $txhash = $tx['hash'];
+
+      $TransactionTrustsetCheck = TransactionTrustset::where('txhash',$txhash)->count();
+      if($TransactionTrustsetCheck)
+        return null; //nothing to do, already stored
+
+      $TransactionTrustset = new TransactionTrustset;
+      $TransactionTrustset->txhash = $txhash;
+
+      if($account->account == $tx['Account'])
+        $TransactionTrustset->source_account_id = $account->id; //reuse it
+      else
+        $TransactionTrustset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+
+      if($account->account == 'rhSTjeiRC6Zu5mmG4Bmy21uPcwJLhnmQov' ||
+      StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->account == 'rhSTjeiRC6Zu5mmG4Bmy21uPcwJLhnmQov')
+        $this->info(json_encode($tx));
+      $TransactionTrustset->fee = $tx['Fee']; //in drops
+
+      if($tx['LimitAmount']['value'] == 0)
+        $TransactionTrustset->state = 0; //deleted
+      else
+        $TransactionTrustset->state = 1; //created
+
+      $TransactionTrustset->issuer_account_id = StaticAccount::GetOrCreate($tx['LimitAmount']['issuer'],$this->current_ledger)->id;
+      $TransactionTrustset->currency = $tx['LimitAmount']['currency'];
+      $TransactionTrustset->amount = $tx['LimitAmount']['value'];
+
+      $TransactionTrustset->save();
+
       return null;
     }
 
     private function processTransaction_AccountSet(Account $account, array $tx)
     {
+      $txhash = $tx['hash'];
+      $TransactionAccountsetCheck = TransactionAccountset::where('txhash',$txhash)->count();
+      if($TransactionAccountsetCheck)
+        return null; //nothing to do, already stored
+
+      $TransactionAccountset = new TransactionAccountset;
+      $TransactionAccountset->txhash = $txhash;
+
+      if($account->account == $tx['Account'])
+        $TransactionAccountset->source_account_id = $account->id; //reuse it
+      else
+        $TransactionAccountset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+
+      $TransactionAccountset->fee = $tx['Fee']; //in drops
+
+      $TransactionAccountset->set_flag = $tx['SetFlag'];
+
+      $TransactionAccountset->save();
+
+
+
       return null;
     }
 
