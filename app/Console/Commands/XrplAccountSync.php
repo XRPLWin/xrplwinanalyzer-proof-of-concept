@@ -90,7 +90,6 @@ class XrplAccountSync extends Command
           $do = false;
         }
 
-
         if(!isset($txs['result']['marker']))
         {
           //end reached
@@ -108,9 +107,24 @@ class XrplAccountSync extends Command
       if($account->is_history_synced)
       {
         //handle event after full history pull for account
+        $analyzed = $this->analyzeSyncedData($account);
       }
 
       return 0;
+    }
+
+    /**
+    * After we fully synced account, analyze it and store additional info to db.
+    **/
+    private function analyzeSyncedData(Account $account) : bool
+    {
+      if(!$account->is_history_synced)
+        return false; //not synced fully
+
+      # 1. Detect hot wallets
+      #    To detect hot wallets we will examine transactions and detect large amount of token flow from issuer account.
+
+      
     }
 
     private function processTransaction(Account $account, array $tx)
@@ -221,6 +235,8 @@ class XrplAccountSync extends Command
 
     private function processTransaction_AccountSet(Account $account, array $tx)
     {
+      return null; //not used yet
+
       $txhash = $tx['hash'];
       $TransactionAccountsetCheck = TransactionAccountset::where('txhash',$txhash)->count();
       if($TransactionAccountsetCheck)
@@ -236,7 +252,7 @@ class XrplAccountSync extends Command
 
       $TransactionAccountset->fee = $tx['Fee']; //in drops
 
-      $TransactionAccountset->set_flag = $tx['SetFlag'];
+      //$TransactionAccountset->set_flag = $tx['SetFlag'];
 
       $TransactionAccountset->save();
 

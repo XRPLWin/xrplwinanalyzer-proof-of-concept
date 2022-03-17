@@ -18,7 +18,7 @@ class CreateTxAccountsetsTable extends Migration
           $table->char('txhash',64)->collation('utf8_bin');
           $table->foreignId('source_account_id');
 
-          $table->integer('set_flag')->unsigned();
+          //$table->integer('set_flag')->unsigned();
 
           $table->integer('fee')->unsigned()->default(0); //in drops
 
