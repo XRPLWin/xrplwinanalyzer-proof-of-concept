@@ -124,7 +124,8 @@ class XrplAccountSync extends Command
       # 1. Detect hot wallets
       #    To detect hot wallets we will examine transactions and detect large amount of token flow from issuer account.
 
-      
+      return true;
+
     }
 
     private function processTransaction(Account $account, array $tx)
