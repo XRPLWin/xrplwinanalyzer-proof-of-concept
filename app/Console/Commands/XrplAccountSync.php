@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+#use Illuminate\Support\Facades\Artisan;
 use App\Statics\XRPL;
 use App\Statics\Account as StaticAccount;
 use App\Models\Account;
@@ -19,7 +20,9 @@ class XrplAccountSync extends Command
      *
      * @var string
      */
-    protected $signature = 'xrpl:accountsync {address}';
+    protected $signature = 'xrpl:accountsync
+                            {address : XRP account address}
+                            {--recursiveaccountqueue : Enable to create additional queues for other accounts}';
 
     /**
      * The console command description.
@@ -27,6 +30,8 @@ class XrplAccountSync extends Command
      * @var string
      */
     protected $description = 'Do a full sync of account';
+
+    protected $recursiveaccountqueue = false;
 
     /**
      * Create a new command instance.
@@ -47,8 +52,9 @@ class XrplAccountSync extends Command
     public function handle()
     {
       $address = $this->argument('address');
-      $this->ledger_current = XRPL::ledger_current();
+      $this->recursiveaccountqueue = $this->option('recursiveaccountqueue'); //boolean
 
+      $this->ledger_current = XRPL::ledger_current();
 
       //validate $account format
       $account = Account::select([
@@ -56,6 +62,7 @@ class XrplAccountSync extends Command
           'account',
           'ledger_first_index',
           'ledger_last_index',
+          'is_history_synced'
         ])
         ->where('account',$address)
         ->first();
@@ -65,7 +72,9 @@ class XrplAccountSync extends Command
         $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
       }
 
-      $account->ledger_last_index = $this->ledger_current;
+      //dd($account );
+
+
       //$account->ledger_last_index = 40407578; //$this->ledger_current
       //$account->ledger_last_index = 44317866; //$this->ledger_current
 
@@ -80,19 +89,23 @@ class XrplAccountSync extends Command
         $ledger_index_min = -1; //back to full history
       }
 
+      $account->ledger_last_index = $this->ledger_current;
+
       $account->save();
       $marker = null;
       $is_history_synced = false;
       $do = true;
       while($do) {
         $txs = XRPL::account_tx($address,$ledger_index_min,$account->ledger_last_index,$marker);
+        //dd($txs);
         if(isset($txs['result']['status']) && $txs['result']['status'] == 'success')
         {
           foreach($txs['result']['transactions'] as $tx)
           {
             $this->processTransaction($account,$tx);
             $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
-            $account->ledger_first_index = $tx['tx']['ledger_index'];
+            if($account->ledger_first_index > $tx['tx']['ledger_index'])
+              $account->ledger_first_index = $tx['tx']['ledger_index'];
           }
         }
         else
@@ -119,31 +132,24 @@ class XrplAccountSync extends Command
       if($account->is_history_synced)
       {
         //handle event after full history pull for account
-        $analyzed = $this->analyzeSyncedData($account);
+        //$analyzed = $this->analyzeSyncedData($account);
+        $analyzed = StaticAccount::analyzeData($account);
       }
 
       return 0;
     }
 
-    /**
-    * After we fully synced account, analyze it and store additional info to db.
-    **/
-    private function analyzeSyncedData(Account $account) : bool
-    {
-      if(!$account->is_history_synced)
-        return false; //not synced fully
-
-      # 1. Detect hot wallets
-      #    To detect hot wallets we will examine transactions and detect large amount of token flow from issuer account.
-
-      return true;
-
-    }
 
     private function processTransaction(Account $account, array $tx)
     {
       $type = $tx['tx']['TransactionType'];
       $method = 'processTransaction_'.$type;
+      if($tx['meta']['TransactionResult'] != 'tesSUCCESS')
+      {
+        //$this->info($tx['meta']['TransactionResult'].': '.\json_encode($tx));
+        return null; //do not log failed transactions
+      }
+      //dd($tx['meta']['TransactionResult']);
       return $this->{$method}($account, $tx['tx'], $tx['meta']);
     }
 
@@ -221,12 +227,45 @@ class XrplAccountSync extends Command
             */
             if(isset($AffectedNode['CreatedNode']['LedgerEntryType']) && $AffectedNode['CreatedNode']['LedgerEntryType'] ==  'AccountRoot')
             {
+
               // save account activation $TransactionPayment->source_account_id created $AffectedNode['CreatedNode'].NewFields.Account ($TransactionPayment->destination_account_id)
+
+              $this->info('Activation: '.$source_account->account.' created '.$AffectedNode['CreatedNode']['NewFields']['Account']);
               $Activation = new Activation;
               $Activation->tx_payment_id = $TransactionPayment->id;
               $Activation->source_account_id = $TransactionPayment->source_account_id;
               $Activation->destination_account_id = $TransactionPayment->destination_account_id;
               $Activation->save();
+
+              //
+
+              if($this->recursiveaccountqueue)
+              {
+                if($account->account != $source_account->account)
+                {
+                  //parent is created this account, queue parent
+                  $this->info('### Queued account: '.$source_account->account);
+                  $source_account->sync(true);
+                }
+                /*dd($tx,$destination_account,$account->account);
+                if($destination_account->account == $AffectedNode['CreatedNode']['NewFields']['Account'])
+                {
+                  $this->info('### Queued account: '.$destination_account->account);
+                  $destination_account->sync(true);
+                }
+                else
+                {
+                  dd($AffectedNode['CreatedNode']['NewFields']['Account'], $destination_account);
+                }*/
+
+                //queue fullsync of account: $TransactionPayment->destination_account_id
+                /*Artisan::queue('xrpl:accountsync', [
+                    'address' => $AffectedNode['CreatedNode']['NewFields']['Account'],
+                    '--recursiveaccountqueue' => true,
+                    '--queue' => 'default'
+                ]);*/
+                //dd($AffectedNode['CreatedNode']['NewFields']['Account']);
+              }
 
             }
             //dd($TransactionPayment,$account,$AffectedNode['CreatedNode']);
@@ -237,7 +276,7 @@ class XrplAccountSync extends Command
       //dd($meta['AffectedNodes']);
 
 
-      $this->info($tx['Destination'].' '.$tx['Account']);
+      //$this->info($tx['Destination'].' '.$tx['Account']);
       return null;
     }
 

@@ -24,6 +24,7 @@ class AccountLoader
         'account',
         'ledger_first_index',
         'ledger_last_index',
+        'is_history_synced'
       ])
       ->where('account',$address)
       ->first();
@@ -39,7 +40,7 @@ class AccountLoader
 
     $account->save();
     $this->account = $account;
-    $this->synced = $account->isHistorySynced();
+    $this->synced = $account->is_history_synced;
     return $this;
   }
 }

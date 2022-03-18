@@ -32,6 +32,27 @@ class Account
     return $account;
   }
 
-  
+  /**
+  * Analyze synced data.
+  **/
+  public static function analyzeData(AccountModel $account)
+  {
+    if(!$account->is_history_synced)
+      return false; //not synced fully
+
+    # 1. Detect hot wallets
+    #    To detect hot wallets we will examine transactions and detect large amount of token flow from issuer account.
+
+    //TODO
+
+
+    # 2. Aggregate payments and store them in DB.
+    #
+
+    //TODO
+    
+
+    return true;
+  }
 
 }

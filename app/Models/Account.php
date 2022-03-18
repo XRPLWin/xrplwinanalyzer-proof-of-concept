@@ -2,7 +2,7 @@
 
 namespace App\Models;
 use App\Statics\XRPL;
-use App\Jobs\XrplAccountSyncJob;
+use Illuminate\Support\Facades\Artisan;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,16 +19,18 @@ class Account extends Model
       'is_history_synced' => 'boolean',
   ];
 
-  public function isHistorySynced() : bool
+  /*public function isHistorySynced() : bool
   {
     return $this->is_history_synced;
     //return !($this->ledger_first_index > config('xrpl.genesis_ledger'));
-  }
+  }*/
 
-  public function sync()
+  public function sync(bool $recursive = true)
   {
-    XrplAccountSyncJob::dispatch($this);
-    //$txs = XRPL::account_tx($this->account);
-    //dd($txs);
+    Artisan::queue('xrpl:accountsync', [
+        'address' => $this->account,
+        '--recursiveaccountqueue' => $recursive,
+    ])->onQueue('default');
+
   }
 }

@@ -1,7 +1,13 @@
-php artisan migrate:fresh && php artisan xrpl:accountsync r3rdCdrFdKG1YqMgJjXDZqeStGayzxQzWy
+Manual queue sync testing:
+
+Random:
+php artisan migrate:fresh && php artisan xrpl:accountsync r3rdCdrFdKG1YqMgJjXDZqeStGayzxQzWy --recursiveaccountqueue
 
 Bitrex:
-php artisan migrate:fresh && php artisan xrpl:accountsync rPVMhWBsfF9iMXYj3aAzJVkPDTFNSyWdKy
+php artisan migrate:fresh && php artisan xrpl:accountsync rPVMhWBsfF9iMXYj3aAzJVkPDTFNSyWdKy --recursiveaccountqueue
 
 Genesis:
-php artisan migrate:fresh && php artisan xrpl:accountsync rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo
+php artisan migrate:fresh && php artisan xrpl:accountsync rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo --recursiveaccountqueue
+
+This one is child of rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo and queues said account:
+php artisan migrate:fresh && php artisan xrpl:accountsync rauNJ5VPyNZ9sRaPBDXUjNrm7cPyDH7y6s --recursiveaccountqueue

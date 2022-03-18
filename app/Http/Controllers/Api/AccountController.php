@@ -15,13 +15,13 @@ class AccountController extends Controller
   {
 
     $acct = new AccountLoader($account);
-
+    //dd($acct);
     if(!$acct->synced)
     {
       $acct->account->sync();
-
+      dd('synced respond now');
     }
-dd('synced respond now');
+
 
 
 
