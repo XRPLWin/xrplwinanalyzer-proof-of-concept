@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Statics\XRPL;
+use App\Statics\Account as StaticAccount;
 use App\Models\Account;
 use App\Loaders\AccountLoader;
 
@@ -38,6 +39,19 @@ class AccountController extends Controller
   {
     $txs = XRPL::account_tx($account);
     return response()->json($txs);
+  }
+
+
+  public function dev_analyze(string $account)
+  {
+    $acct = new AccountLoader($account);
+    if(!$acct->synced)
+      dd('Not synced');
+
+
+    StaticAccount::analyzeData($acct->account);
+    //dd($acct);
+
   }
 
 

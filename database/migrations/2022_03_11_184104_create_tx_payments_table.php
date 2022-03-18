@@ -28,6 +28,8 @@ class CreateTxPaymentsTable extends Migration
             $table->bigInteger('destination_tag')->unsigned()->nullable();
             $table->bigInteger('source_tag')->unsigned()->nullable();
 
+            $table->dateTimeTz('time_at', 0);
+
 
             $table->foreign('source_account_id')->references('id')->on('accounts')->onDelete('restrict');
             $table->foreign('destination_account_id')->references('id')->on('accounts')->onDelete('restrict');

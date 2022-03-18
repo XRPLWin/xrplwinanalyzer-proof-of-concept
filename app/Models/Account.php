@@ -31,6 +31,21 @@ class Account extends Model
         'address' => $this->account,
         '--recursiveaccountqueue' => $recursive,
     ])->onQueue('default');
-
   }
+
+  # Relationships
+
+  /**
+   * @return \Illuminate\Database\Eloquent\Relations\HasMany
+   */
+  public function tx_payments_where_source()
+  {
+      return $this->hasMany(TransactionPayment::class ,'source_account_id');
+  }
+
+  public function tx_payments_where_destination()
+  {
+      return $this->hasMany(TransactionPayment::class ,'destination_account_id');
+  }
+
 }

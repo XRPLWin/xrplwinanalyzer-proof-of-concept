@@ -10,14 +10,18 @@ if (!function_exists('config_static')) {
   }
 }
 
-
 if (!function_exists('ripple_epoch_to_epoch')) {
-  /**
-  * For claim this site domain verification and other
-  */
   function ripple_epoch_to_epoch(int $ripple_date)
   {
     return $ripple_date + config('xrpl.ripple_epoch');
+  }
+}
+
+if (!function_exists('ripple_epoch_to_carbon')) {
+  function ripple_epoch_to_carbon(int $ripple_date)
+  {
+    $timestamp = $ripple_date + config('xrpl.ripple_epoch');
+    return \Carbon\Carbon::createFromTimestamp($timestamp);
   }
 }
 

@@ -22,6 +22,8 @@ class CreateTxAccountsetsTable extends Migration
 
           $table->integer('fee')->unsigned()->default(0); //in drops
 
+          $table->dateTimeTz('time_at', 0);
+
           $table->foreign('source_account_id')->references('id')->on('accounts')->onDelete('restrict');
         });
     }

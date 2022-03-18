@@ -34,8 +34,10 @@ class Account
 
   /**
   * Analyze synced data.
+  * @see https://xrpl.org/issuing-and-operational-addresses.html
+  TEST: http://xlanalyzer.test/dev/account/analyze/rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo
   **/
-  public static function analyzeData(AccountModel $account)
+  public static function analyzeData(AccountModel $account) : bool
   {
     if(!$account->is_history_synced)
       return false; //not synced fully
@@ -44,13 +46,21 @@ class Account
     #    To detect hot wallets we will examine transactions and detect large amount of token flow from issuer account.
 
     //TODO
+    //dd($account->tx_payments_where_source->first(),$account->tx_payments_where_destination->first());
 
+    // Iterate over all transactions detecting where this account sent token currency
+    $account->tx_payments_where_source()->where('issuer_account_id', $account->id)->orderBy('time_at','asc')->chunk(200, function ($payments) {
+      foreach ($payments as $payment) {
+        //This is payment in token currency from issuer to external account.
+        dd($payment);
+      }
+    });
 
     # 2. Aggregate payments and store them in DB.
     #
 
     //TODO
-    
+
 
     return true;
   }

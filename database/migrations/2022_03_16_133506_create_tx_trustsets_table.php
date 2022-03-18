@@ -25,6 +25,8 @@ class CreateTxTrustsetsTable extends Migration
 
             $table->decimal('amount',30,15); //in XRP or currency value
 
+            $table->dateTimeTz('time_at', 0);
+
             $table->foreign('source_account_id')->references('id')->on('accounts')->onDelete('restrict');
             $table->foreign('issuer_account_id')->references('id')->on('accounts')->onDelete('restrict');
         });

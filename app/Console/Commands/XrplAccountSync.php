@@ -189,6 +189,7 @@ class XrplAccountSync extends Command
       $TransactionPayment->destination_tag = $destination_tag;
       $TransactionPayment->source_tag = $source_tag;
       $TransactionPayment->fee = $tx['Fee']; //in drops
+      $TransactionPayment->time_at = ripple_epoch_to_carbon($tx['date']);
       if(is_array($tx['Amount']))
       {
         //it is payment in currency
@@ -317,6 +318,7 @@ class XrplAccountSync extends Command
       $TransactionTrustset->issuer_account_id = StaticAccount::GetOrCreate($tx['LimitAmount']['issuer'],$this->ledger_current)->id;
       $TransactionTrustset->currency = $tx['LimitAmount']['currency'];
       $TransactionTrustset->amount = $tx['LimitAmount']['value'];
+      $TransactionTrustset->time_at = ripple_epoch_to_carbon($tx['date']);
 
       $TransactionTrustset->save();
 
@@ -341,6 +343,7 @@ class XrplAccountSync extends Command
         $TransactionAccountset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current)->id;
 
       $TransactionAccountset->fee = $tx['Fee']; //in drops
+      $TransactionAccountset->time_at = ripple_epoch_to_carbon($tx['date']);
 
       //$TransactionAccountset->set_flag = $tx['SetFlag'];
 
