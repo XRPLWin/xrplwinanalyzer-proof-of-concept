@@ -1,1 +1,7 @@
 php artisan migrate:fresh && php artisan xrpl:accountsync r3rdCdrFdKG1YqMgJjXDZqeStGayzxQzWy
+
+Bitrex:
+php artisan migrate:fresh && php artisan xrpl:accountsync rPVMhWBsfF9iMXYj3aAzJVkPDTFNSyWdKy
+
+Genesis:
+php artisan migrate:fresh && php artisan xrpl:accountsync rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo

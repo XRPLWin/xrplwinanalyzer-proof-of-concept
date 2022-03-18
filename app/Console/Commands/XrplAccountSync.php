@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Statics\XRPL;
 use App\Statics\Account as StaticAccount;
 use App\Models\Account;
+use App\Models\Activation;
 use App\Models\TransactionPayment;
 use App\Models\TransactionTrustset;
 use App\Models\TransactionAccountset;
@@ -37,7 +38,7 @@ class XrplAccountSync extends Command
         parent::__construct();
     }
 
-    private $current_ledger;
+    private $ledger_current = -1;
     /**
      * Execute the console command.
      *
@@ -46,7 +47,7 @@ class XrplAccountSync extends Command
     public function handle()
     {
       $address = $this->argument('address');
-      $this->current_ledger = XRPL::ledger_current();
+      $this->ledger_current = XRPL::ledger_current();
 
 
       //validate $account format
@@ -61,24 +62,35 @@ class XrplAccountSync extends Command
 
       if(!$account)
       {
-        $account = StaticAccount::GetOrCreate($address,$this->current_ledger);
+        $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
       }
 
-      $account->ledger_last_index = $this->current_ledger;
+      $account->ledger_last_index = $this->ledger_current;
+      //$account->ledger_last_index = 40407578; //$this->ledger_current
+      //$account->ledger_last_index = 44317866; //$this->ledger_current
 
-      //TODO adjust ledger indexes and put to account_tx
+      $ledger_index_max = $this->ledger_current; //from current ledger
+
+      # Adjust ledger history index limit.
+      if($account->is_history_synced) {
+        //pull only new (we have already older data synced)
+        $ledger_index_min = $account->ledger_last_index;
+      } else {
+        //pull full history
+        $ledger_index_min = -1; //back to full history
+      }
 
       $account->save();
       $marker = null;
       $is_history_synced = false;
       $do = true;
       while($do) {
-        $txs = XRPL::account_tx($address,-1,-1,$marker);
+        $txs = XRPL::account_tx($address,$ledger_index_min,$account->ledger_last_index,$marker);
         if(isset($txs['result']['status']) && $txs['result']['status'] == 'success')
         {
           foreach($txs['result']['transactions'] as $tx)
           {
-            $this->processTransaction($account,$tx['tx']);
+            $this->processTransaction($account,$tx);
             $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
             $account->ledger_first_index = $tx['tx']['ledger_index'];
           }
@@ -130,17 +142,20 @@ class XrplAccountSync extends Command
 
     private function processTransaction(Account $account, array $tx)
     {
-      $type = $tx['TransactionType'];
+      $type = $tx['tx']['TransactionType'];
       $method = 'processTransaction_'.$type;
-      return $this->{$method}($account, $tx);
+      return $this->{$method}($account, $tx['tx'], $tx['meta']);
     }
 
     /**
     * Payment to or from in any currency.
     */
-    private function processTransaction_Payment(Account $account, array $tx)
+    private function processTransaction_Payment(Account $account, array $tx, array $meta)
     {
       $txhash = $tx['hash'];
+
+      //if($txhash == '132C28AF6AB9416D111964263CC8AC017325E1FA32A33179D6975581CB45432F') dd($tx,$meta);
+
       $destination_tag = isset($tx['DestinationTag']) ? $tx['DestinationTag']:null;
       $source_tag = isset($tx['SourceTag']) ? $tx['SourceTag']:null;
       //$this->info($tx['DestinationTag']);
@@ -153,11 +168,11 @@ class XrplAccountSync extends Command
       if($account->account == $tx['Account'])
       {
         $source_account = $account;
-        $destination_account = StaticAccount::GetOrCreate($tx['Destination'],$this->current_ledger);
+        $destination_account = StaticAccount::GetOrCreate($tx['Destination'],$this->ledger_current);
       }
       else
       {
-        $source_account = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger);
+        $source_account = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current);
         $destination_account = $account;
       }
 
@@ -172,7 +187,7 @@ class XrplAccountSync extends Command
       {
         //it is payment in currency
         $TransactionPayment->amount = $tx['Amount']['value'];
-        $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+        $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current)->id;
         $TransactionPayment->currency = $tx['Amount']['currency'];
       }
       else
@@ -184,22 +199,60 @@ class XrplAccountSync extends Command
       }
 
       $TransactionPayment->save();
+
+
+      //Check account activation
+      if(isset($meta['AffectedNodes'])) {
+
+        foreach($meta['AffectedNodes'] as $AffectedNode)
+        {
+          if(isset($AffectedNode['CreatedNode']))
+          {
+            /*
+            $AffectedNode['CreatedNode'] = array:3 [
+              "LedgerEntryType" => "AccountRoot"
+              "LedgerIndex" => "6E705A13D395F1CD1E5E69C88D7F03C67588ECF551E37F64CF7A9EABDEF78606"
+              "NewFields" => array:3 [
+                "Account" => "r3rdCdrFdKG1YqMgJjXDZqeStGayzxQzWy"
+                "Balance" => "26250000"
+                "Sequence" => 1
+              ]
+            ]
+            */
+            if(isset($AffectedNode['CreatedNode']['LedgerEntryType']) && $AffectedNode['CreatedNode']['LedgerEntryType'] ==  'AccountRoot')
+            {
+              // save account activation $TransactionPayment->source_account_id created $AffectedNode['CreatedNode'].NewFields.Account ($TransactionPayment->destination_account_id)
+              $Activation = new Activation;
+              $Activation->tx_payment_id = $TransactionPayment->id;
+              $Activation->source_account_id = $TransactionPayment->source_account_id;
+              $Activation->destination_account_id = $TransactionPayment->destination_account_id;
+              $Activation->save();
+
+            }
+            //dd($TransactionPayment,$account,$AffectedNode['CreatedNode']);
+            break;
+          }
+        }
+      }
+      //dd($meta['AffectedNodes']);
+
+
       $this->info($tx['Destination'].' '.$tx['Account']);
       return null;
     }
 
 
-    private function processTransaction_OfferCreate(Account $account, array $tx)
+    private function processTransaction_OfferCreate(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_OfferCancel(Account $account, array $tx)
+    private function processTransaction_OfferCancel(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_TrustSet(Account $account, array $tx)
+    private function processTransaction_TrustSet(Account $account, array $tx, array $meta)
     {
       $txhash = $tx['hash'];
 
@@ -213,11 +266,8 @@ class XrplAccountSync extends Command
       if($account->account == $tx['Account'])
         $TransactionTrustset->source_account_id = $account->id; //reuse it
       else
-        $TransactionTrustset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+        $TransactionTrustset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current)->id;
 
-      if($account->account == 'rhSTjeiRC6Zu5mmG4Bmy21uPcwJLhnmQov' ||
-      StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->account == 'rhSTjeiRC6Zu5mmG4Bmy21uPcwJLhnmQov')
-        $this->info(json_encode($tx));
       $TransactionTrustset->fee = $tx['Fee']; //in drops
 
       if($tx['LimitAmount']['value'] == 0)
@@ -225,7 +275,7 @@ class XrplAccountSync extends Command
       else
         $TransactionTrustset->state = 1; //created
 
-      $TransactionTrustset->issuer_account_id = StaticAccount::GetOrCreate($tx['LimitAmount']['issuer'],$this->current_ledger)->id;
+      $TransactionTrustset->issuer_account_id = StaticAccount::GetOrCreate($tx['LimitAmount']['issuer'],$this->ledger_current)->id;
       $TransactionTrustset->currency = $tx['LimitAmount']['currency'];
       $TransactionTrustset->amount = $tx['LimitAmount']['value'];
 
@@ -234,7 +284,7 @@ class XrplAccountSync extends Command
       return null;
     }
 
-    private function processTransaction_AccountSet(Account $account, array $tx)
+    private function processTransaction_AccountSet(Account $account, array $tx, array $meta)
     {
       return null; //not used yet
 
@@ -249,7 +299,7 @@ class XrplAccountSync extends Command
       if($account->account == $tx['Account'])
         $TransactionAccountset->source_account_id = $account->id; //reuse it
       else
-        $TransactionAccountset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->current_ledger)->id;
+        $TransactionAccountset->source_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current)->id;
 
       $TransactionAccountset->fee = $tx['Fee']; //in drops
 
@@ -262,52 +312,52 @@ class XrplAccountSync extends Command
       return null;
     }
 
-    private function processTransaction_AccountDelete(Account $account, array $tx)
+    private function processTransaction_AccountDelete(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_SetRegularKey(Account $account, array $tx)
+    private function processTransaction_SetRegularKey(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_SignerListSet(Account $account, array $tx)
+    private function processTransaction_SignerListSet(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_EscrowCreate(Account $account, array $tx)
+    private function processTransaction_EscrowCreate(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_EscrowFinish(Account $account, array $tx)
+    private function processTransaction_EscrowFinish(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_EscrowCancel(Account $account, array $tx)
+    private function processTransaction_EscrowCancel(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelCreate(Account $account, array $tx)
+    private function processTransaction_PaymentChannelCreate(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelFund(Account $account, array $tx)
+    private function processTransaction_PaymentChannelFund(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_PaymentChannelClaim(Account $account, array $tx)
+    private function processTransaction_PaymentChannelClaim(Account $account, array $tx, array $meta)
     {
       return null;
     }
 
-    private function processTransaction_DepositPreauth(Account $account, array $tx)
+    private function processTransaction_DepositPreauth(Account $account, array $tx, array $meta)
     {
       return null;
     }
