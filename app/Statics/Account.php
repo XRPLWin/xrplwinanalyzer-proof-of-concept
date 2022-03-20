@@ -6,6 +6,7 @@ namespace App\Statics;
 use Illuminate\Support\Facades\DB;
 #use Illuminate\Support\Facades\Cache;
 use App\Models\Account as AccountModel;
+use App\Models\Topaccount;
 
 class Account
 {
@@ -49,12 +50,16 @@ class Account
     //dd($account->tx_payments_where_source->first(),$account->tx_payments_where_destination->first());
 
     // Iterate over all transactions detecting where this account sent token currency
-    $account->tx_payments_where_source()->where('issuer_account_id', $account->id)->orderBy('time_at','asc')->chunk(200, function ($payments) {
-      foreach ($payments as $payment) {
-        //This is payment in token currency from issuer to external account.
-        dd($payment);
-      }
-    });
+    $account->tx_payments_where_source()
+      ->where('issuer_account_id', $account->id)
+      ->orderBy('time_at','asc')
+      ->chunk(200, function ($payments) {
+
+        foreach ($payments as $payment) {
+          //This is payment in token currency from issuer to external account.
+          dd($payment);
+        }
+      });
 
     # 2. Aggregate payments and store them in DB.
     #

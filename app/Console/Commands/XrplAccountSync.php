@@ -93,36 +93,49 @@ class XrplAccountSync extends Command
 
       $account->save();
       $marker = null;
+      $max_http_errors = 50;
+      $num_http_errors = 0;
       $is_history_synced = false;
       $do = true;
       while($do) {
-        $txs = XRPL::account_tx($address,$ledger_index_min,$account->ledger_last_index,$marker);
-        //dd($txs);
-        if(isset($txs['result']['status']) && $txs['result']['status'] == 'success')
-        {
-          foreach($txs['result']['transactions'] as $tx)
-          {
-            $this->processTransaction($account,$tx);
-            $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
-            if($account->ledger_first_index > $tx['tx']['ledger_index'])
-              $account->ledger_first_index = $tx['tx']['ledger_index'];
-          }
+        $txs_result = XRPL::account_tx($address,$ledger_index_min,$account->ledger_last_index,$marker);
+        if(!$txs_result['success']) {
+          $num_http_errors++;
+          if($num_http_errors > $max_http_errors)
+            throw new \Exception('Unable to connect to XRPLedger after '.$num_http_errors.' tries');
+          $this->info('Sleeping for 3 seconds');
+          sleep(3); //sleep for 3 seconds
         }
         else
         {
-          //something failed
-          $is_history_synced = false;
-          $do = false;
+          $txs = $txs_result['result'];
+          if(isset($txs['result']['status']) && $txs['result']['status'] == 'success')
+          {
+            foreach($txs['result']['transactions'] as $tx)
+            {
+              $this->processTransaction($account,$tx);
+              $this->info($txs['result']['ledger_index_max'].' - '.$tx['tx']['ledger_index'].' ('.count($txs['result']['transactions']).')');
+              if($account->ledger_first_index > $tx['tx']['ledger_index'])
+                $account->ledger_first_index = $tx['tx']['ledger_index'];
+            }
+          }
+          else
+          {
+            //something failed
+            $is_history_synced = false;
+            $do = false;
+          }
+
+          if(!isset($txs['result']['marker']))
+          {
+            //end reached
+            $is_history_synced = true;
+            $do = false;
+          }
+          else
+            $marker = $txs['result']['marker'];
         }
 
-        if(!isset($txs['result']['marker']))
-        {
-          //end reached
-          $is_history_synced = true;
-          $do = false;
-        }
-        else
-          $marker = $txs['result']['marker'];
       }
 
       $account->is_history_synced = $is_history_synced;
@@ -160,7 +173,6 @@ class XrplAccountSync extends Command
     {
       $txhash = $tx['hash'];
 
-      //if($txhash == '132C28AF6AB9416D111964263CC8AC017325E1FA32A33179D6975581CB45432F') dd($tx,$meta);
 
       $destination_tag = isset($tx['DestinationTag']) ? $tx['DestinationTag']:null;
       $source_tag = isset($tx['SourceTag']) ? $tx['SourceTag']:null;
@@ -193,8 +205,8 @@ class XrplAccountSync extends Command
       if(is_array($tx['Amount']))
       {
         //it is payment in currency
-        $TransactionPayment->amount = $tx['Amount']['value'];
-        $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Account'],$this->ledger_current)->id;
+        $TransactionPayment->amount = $tx['Amount']['value']; //base-10 auto-converted to double in DB
+        $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Amount']['issuer'],$this->ledger_current)->id;
         $TransactionPayment->currency = $tx['Amount']['currency'];
       }
       else
@@ -205,8 +217,26 @@ class XrplAccountSync extends Command
         $TransactionPayment->currency = '';
       }
 
+      $TransactionPayment->is_issuing = false;
+
+      //Check if this transaction is issuing of tokens
+      if($TransactionPayment->source_account_id == $TransactionPayment->issuer_account_id)
+      {
+        if($TransactionPayment->source_account_id == $TransactionPayment->destination_account_id)
+        {
+          //this is token burn
+        }
+        else
+        {
+          $TransactionPayment->is_issuing = true;
+        }
+
+      }
+
+
       $TransactionPayment->save();
 
+      //if($txhash == 'E5C12811A01BADFA8418D89156981284C1A282BFEDFB464379154DB521E17916') dd($tx,$meta,$TransactionPayment);
 
       //Check account activation
       if(isset($meta['AffectedNodes'])) {

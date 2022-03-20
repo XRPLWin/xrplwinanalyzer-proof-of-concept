@@ -14,6 +14,7 @@ class TransactionPayment extends Transaction
    */
   protected $casts = [
       'time_at' => 'datetime',
+      'is_issuing' => 'boolean'
   ];
 
 }

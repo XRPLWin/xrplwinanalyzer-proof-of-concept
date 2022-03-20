@@ -93,15 +93,28 @@ class XRPL
       $body['params'][0]['marker'] = $marker;
     }
 
-    $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_fullhistory_server_uri'), [
-      'body' => json_encode( $body ),
-      'headers' => [
-        //'Accept' => 'application/json',
-        'Content-Type' => 'application/json',
-      ],
-    ]);
-    $ret = \json_decode($response->getBody(),true);
-    return $ret;
+    try {
+      $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_fullhistory_server_uri'), [
+        'http_errors' => false,
+        'body' => json_encode( $body ),
+        'headers' => [
+          //'Accept' => 'application/json',
+          'Content-Type' => 'application/json',
+        ],
+      ]);
+      $status_code = $response->getStatusCode();
+    } catch (\Throwable $e) {
+      $status_code = 500;
+    }
+
+    if($status_code == 200) {
+      $ret = \json_decode($response->getBody(),true);
+      return ['success' => true, 'result' => $ret];
+    }
+
+
+      return ['success' => false];
+
   }
 
 

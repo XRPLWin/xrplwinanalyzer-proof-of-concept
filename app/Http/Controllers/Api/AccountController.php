@@ -20,7 +20,7 @@ class AccountController extends Controller
     if(!$acct->synced)
     {
       $acct->account->sync();
-      dd('synced respond now');
+      dd('sync queued, respond now');
     }
 
 
@@ -44,7 +44,9 @@ class AccountController extends Controller
 
   public function dev_analyze(string $account)
   {
-    $acct = new AccountLoader($account);
+    $acct = new AccountLoader($account,false);
+    if(!$acct->exists)
+      dd('Does not exist locally');
     if(!$acct->synced)
       dd('Not synced');
 

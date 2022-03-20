@@ -10,8 +10,9 @@ class AccountLoader
 
   public $account;
   public $synced = false;
+  public $exists = false;
 
-  public function __construct(string $address)
+  public function __construct(string $address, $createIfEmpty = true)
   {
     if(!$address)
       throw new \Exception('Account empty');
@@ -29,8 +30,12 @@ class AccountLoader
       ->where('account',$address)
       ->first();
 
+
     if(!$account)
     {
+      if(!$createIfEmpty)
+        return $this;
+
       $account = new Account;
       $account->account = $address;
       $account->ledger_first_index = $current_ledger;
@@ -41,6 +46,7 @@ class AccountLoader
     $account->save();
     $this->account = $account;
     $this->synced = $account->is_history_synced;
+    $this->exists = true;
     return $this;
   }
 }

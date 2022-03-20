@@ -11,3 +11,7 @@ php artisan migrate:fresh && php artisan xrpl:accountsync rM1oqKtfh1zgjdAgbFmaRm
 
 This one is child of rM1oqKtfh1zgjdAgbFmaRm3btfGBX25xVo and queues said account:
 php artisan migrate:fresh && php artisan xrpl:accountsync rauNJ5VPyNZ9sRaPBDXUjNrm7cPyDH7y6s --recursiveaccountqueue
+
+
+Transaction with e-3
+https://bithomp.com/explorer/FFAE82F0D25EFBA7D181DCB22B66CA9A37873AE3584B9CC926DE937AE705C116

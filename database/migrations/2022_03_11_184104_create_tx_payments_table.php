@@ -18,7 +18,7 @@ class CreateTxPaymentsTable extends Migration
             $table->char('txhash',64)->collation('utf8_bin');
             $table->foreignId('source_account_id');
             $table->foreignId('destination_account_id');
-            $table->decimal('amount',30,15); //in XRP or currency value
+            $table->double('amount'); //in XRP or currency value
             $table->integer('fee')->unsigned()->default(0); //in drops
 
             $table->foreignId('issuer_account_id')->nullable();
@@ -27,6 +27,8 @@ class CreateTxPaymentsTable extends Migration
 
             $table->bigInteger('destination_tag')->unsigned()->nullable();
             $table->bigInteger('source_tag')->unsigned()->nullable();
+
+            $table->boolean('is_issuing')->default(false);
 
             $table->dateTimeTz('time_at', 0);
 

@@ -23,7 +23,7 @@ class CreateTxTrustsetsTable extends Migration
             $table->foreignId('issuer_account_id')->nullable();
             $table->string('currency')->collation('utf8_bin'); //utf8_bin case sensitive, currency as set in xrpl
 
-            $table->decimal('amount',30,15); //in XRP or currency value
+            $table->double('amount'); //in XRP or currency value
 
             $table->dateTimeTz('time_at', 0);
 
