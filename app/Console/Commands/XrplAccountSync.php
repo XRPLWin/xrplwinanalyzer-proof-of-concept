@@ -173,6 +173,10 @@ class XrplAccountSync extends Command
     {
       $txhash = $tx['hash'];
 
+      $is_partialPayment = false;
+      if(isset($tx['Flags']) && xrpl_has_flag($tx['Flags'],131072)) {
+        $is_partialPayment = true;
+      }
 
       $destination_tag = isset($tx['DestinationTag']) ? $tx['DestinationTag']:null;
       $source_tag = isset($tx['SourceTag']) ? $tx['SourceTag']:null;
@@ -205,14 +209,30 @@ class XrplAccountSync extends Command
       if(is_array($tx['Amount']))
       {
         //it is payment in currency
-        $TransactionPayment->amount = $tx['Amount']['value']; //base-10 auto-converted to double in DB
+        //if( !$is_partialPayment )
+        //  $amount = $tx['Amount']['value'];
+        //else {
+          $amount = $meta['delivered_amount']['value'];
+          //$this->info('[T] '.$meta['delivered_amount']['value'].' - '.$tx['Amount']['value'].' HSH: '.$txhash);
+        //}
+        //if($meta['delivered_amount']['currency'] != $tx['Amount']['currency']) dd($meta['delivered_amount']);
+
+        $TransactionPayment->amount = $amount; //base-10 auto-converted to double in DB
         $TransactionPayment->issuer_account_id = StaticAccount::GetOrCreate($tx['Amount']['issuer'],$this->ledger_current)->id;
-        $TransactionPayment->currency = $tx['Amount']['currency'];
+        $TransactionPayment->currency = $meta['delivered_amount']['currency'];
       }
       else
       {
         //it is payment in XRP
-        $TransactionPayment->amount = drops_to_xrp($tx['Amount']);
+
+        //if(!$is_partialPayment)
+        //  $amount = $tx['Amount'];
+        //else {
+          $amount = $meta['delivered_amount'];
+          //$this->info($meta['delivered_amount'].' - '.$tx['Amount'].' HSH: '.$txhash);
+        //}
+
+        $TransactionPayment->amount = drops_to_xrp($amount);
         $TransactionPayment->issuer_account_id = null;
         $TransactionPayment->currency = '';
       }

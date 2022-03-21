@@ -25,6 +25,16 @@ if (!function_exists('ripple_epoch_to_carbon')) {
   }
 }
 
+if (!function_exists('xrpl_has_flag')) {
+  /**
+  * Check if $check is included in $flags using bitwise-and operator.
+  */
+  function xrpl_has_flag(int $flags, int $check)
+  {
+  	return ($flags & $check) ? true : false;
+  }
+}
+
 if (!function_exists('wallet_to_short')) {
   /**
   * Shortify wallet address to xxxx....xxxx
