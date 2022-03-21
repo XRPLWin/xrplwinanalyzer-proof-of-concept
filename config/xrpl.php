@@ -38,7 +38,7 @@ return [
   * Ignore history pill on exchange accounts and genesis accounts
   * We do not need to analyze those.
   */
-  'ignore_accounts' => [
+  'ignore_history_accounts' => [
     # GENESIS ACCOUNTS (https://bithomp.com/api/v2/genesis)
     'rBKPS4oLSaV2KVVuHH8EpQqMGgGefGFQs7' => 'GENESIS',
     'rLs1MzkFWCxTbuAHgjeTZK4fcCDDnf2KRv' => 'AnnaSee2',

@@ -72,13 +72,19 @@ class XrplAccountSync extends Command
         $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
       }
 
-      //dd($account );
+    //  dd($account );
 
 
       //$account->ledger_last_index = 40407578; //$this->ledger_current
       //$account->ledger_last_index = 44317866; //$this->ledger_current
 
       $ledger_index_max = $this->ledger_current; //from current ledger
+
+      if(isset(config('xrpl.ignore_history_accounts')[$account->account])) {
+        $account->is_history_synced = true;
+        $this->info('History sync skipped (exchange or genesis account)');
+      }
+
 
       # Adjust ledger history index limit.
       if($account->is_history_synced) {
@@ -90,6 +96,8 @@ class XrplAccountSync extends Command
       }
 
       $account->ledger_last_index = $this->ledger_current;
+
+
 
       $account->save();
       $marker = null;

@@ -18,3 +18,6 @@ https://bithomp.com/explorer/FFAE82F0D25EFBA7D181DCB22B66CA9A37873AE3584B9CC926D
 
 Partial payment
 https://livenet.xrpl.org/transactions/5DC93DBF937296E6CD03F33A2E05C5542DB237D131BAB914F2C2E1E0FB6714C4/detailed
+
+Scammer
+php artisan migrate:fresh && php artisan xrpl:accountsync rNv9jnD6rVUi6nYKMPixQf9Q1P1f76BJed --recursiveaccountqueue
