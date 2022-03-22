@@ -68,12 +68,9 @@ class XrplAccountSync extends Command
         ->first();
 
       if(!$account)
-      {
         $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
-      }
 
-    //  dd($account );
-
+      //dd($account );
 
       //$account->ledger_last_index = 40407578; //$this->ledger_current
       //$account->ledger_last_index = 44317866; //$this->ledger_current
