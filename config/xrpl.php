@@ -22,7 +22,7 @@ return [
     //for connection via php GuzzleHttp (full history server)
     'rippled_fullhistory_server_uri' => 'https://s.altnet.rippletest.net:51234',
     //websocket domain (example: 'xrplcluster.com')
-    'server_wss' => 'xrplcluster.com',
+    'server_wss' => 's.altnet.rippletest.net',
   ],
 
 
