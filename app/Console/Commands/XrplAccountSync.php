@@ -55,6 +55,7 @@ class XrplAccountSync extends Command
       $this->recursiveaccountqueue = $this->option('recursiveaccountqueue'); //boolean
 
       $this->ledger_current = XRPL::ledger_current();
+      //$this->ledger_current = 67363975;
 
       //validate $account format
       $account = Account::select([
@@ -71,9 +72,6 @@ class XrplAccountSync extends Command
         $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
 
       //dd($account );
-
-      //$account->ledger_last_index = 40407578; //$this->ledger_current
-      //$account->ledger_last_index = 44317866; //$this->ledger_current
 
       $ledger_index_max = $this->ledger_current; //from current ledger
 

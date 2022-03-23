@@ -23,6 +23,11 @@ class InfoController extends Controller
           'action' => 'Get account info',
           'route' => '/account_info/{account}',
           'method' => 'GET'
+        ],
+        [
+          'action' => 'Get queue info',
+          'route' => '/server/queue',
+          'method' => 'GET'
         ]
       ]
     ]);
