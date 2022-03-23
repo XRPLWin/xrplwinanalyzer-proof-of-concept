@@ -16,7 +16,7 @@ class InfoController extends Controller
       'license' => 'ISC License',
       'copyright' => 'Copyright (c) 2022, XRPLWin (https://xrpl.win)',
       'documentation' => 'TODO',
-      'release-notes' => 'TODO',
+      //'release-notes' => 'TODO',
       'endpoints' => [
         //TODO
         [
