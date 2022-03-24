@@ -205,4 +205,31 @@ class XRPL
     return $ret;
   }
 
+  /**
+  * TODO: error handling
+  * @param array $params [ 'taker' => ..., 'taker_gets' => ..., ... ]
+  * @see https://xrpl.org/book_offers.html#book_offers
+  */
+  public static function book_offers(array $params) : array
+  {
+      $client = new \GuzzleHttp\Client();
+      $body = [
+        'method' => 'book_offers',
+        //'id' => 'xrpl.win_1',
+        'params' => [
+          $params
+        ]
+      ];
+      //dd(json_encode( $body ));
+      $response = $client->request('POST', config('xrpl.'.config('xrpl.net').'.rippled_server_uri'), [
+        'body' => json_encode( $body ),
+        'headers' => [
+          //'Accept' => 'application/json',
+          'Content-Type' => 'application/json',
+        ],
+      ]);
+      $ret = \json_decode($response->getBody(),true);
+      return $ret;
+  }
+
 }
