@@ -1,5 +1,7 @@
 # XRPLWin Analyzer
 
+WebUI is located here: https://github.com/XRPLWin/xrplwinanalyzer-ui
+
 ## Motivation
 
 When working on xrpl.win website it has shown it is hard to get aggregated data of specific account
