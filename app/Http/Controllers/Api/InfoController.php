@@ -28,6 +28,11 @@ class InfoController extends Controller
           'action' => 'Get queue info',
           'route' => '/server/queue',
           'method' => 'GET'
+        ],
+        [
+          'action' => 'Check token liquidity',
+          'route' => '/book/liquidity_check/{issuer}/{currency}/{amount}',
+          'method' => 'GET'
         ]
       ]
     ]);
