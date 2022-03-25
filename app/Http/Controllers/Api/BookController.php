@@ -54,7 +54,7 @@ class BookController extends Controller
     ]);
 
     $finalBookLine = collect($orderbook)->where('_Capped' != null)->last();
-    $rate =
+    //$rate =
     dd($orderbook,$orderbookReverse);
 
     return response()->json($r);
