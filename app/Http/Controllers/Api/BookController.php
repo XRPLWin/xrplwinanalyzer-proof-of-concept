@@ -14,24 +14,27 @@ class BookController extends Controller
 {
 
   /**
-  * @param string $form 'XRP' or '<ISSUER>+<CURRENCY CODE OR HEX>'
-  * @param string $to 'XRP' or '<ISSUER>+<CURRENCY CODE OR HEX>'
+  * @param string $form 'XRP' or '<CURRENCY CODE OR HEX>+<ISSUER>'
+  * @param string $to 'XRP' or '<CURRENCY CODE OR HEX>+<ISSUER>'
   * @param float|int $tradeAmount
   * @see https://github.com/XRPL-Labs/net-worth-xapp/blob/main/src/plugins/xapp-vue.js
   * @see https://github.com/XRPL-Labs/XRPL-Orderbook-Reader/blob/0378825be82cb21402a9a719c79bfc12a88e2f31/src/index.ts
   * @see https://github.com/XRPL-Labs/XRPL-Orderbook-Reader/blob/0378825be82cb21402a9a719c79bfc12a88e2f31/src/parser/LiquidityParser.ts#L54
-  * @return Response JSON [ 'price' => x.xxx ]
+  * @return \Illuminate\Http\Response JSON [ 'price' => x.xxx ]
   */
   public function currency_rates(string $from, string $to, $amount = 500)
   {
     $r = [ 'price' => 0 ];
+
+    if($from == $to)
+      return response()->json($r);
 
     if($from == 'XRP')
       $_from = [ 'currency' => 'XRP' ];
     else {
       $_from = explode('+',$from);
       if(count($_from) != 2) abort(403);
-      $_from = [ 'issuer' => $_from[0], 'currency' => $_from[1] ];
+      $_from = [ 'issuer' => $_from[1], 'currency' => $_from[0] ];
     }
 
     if($to == 'XRP')
@@ -39,7 +42,7 @@ class BookController extends Controller
     else {
       $_to = explode('+',$to);
       if(count($_to) != 2) abort(403);
-      $_to = [ 'issuer' => $_to[0], 'currency' => $_to[1] ];
+      $_to = [ 'issuer' => $_to[1], 'currency' => $_to[0] ];
     }
 
     $params = [
