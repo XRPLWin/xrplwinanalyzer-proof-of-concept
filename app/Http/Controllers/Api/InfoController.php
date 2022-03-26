@@ -30,8 +30,8 @@ class InfoController extends Controller
           'method' => 'GET'
         ],
         [
-          'action' => 'Check token liquidity',
-          'route' => '/book/liquidity_check/{issuer}/{currency}/{amount}',
+          'action' => 'Get currency exchange rate',
+          'route' => '/currency_rates/{from}/{to}/{amount?}',
           'method' => 'GET'
         ]
       ]
