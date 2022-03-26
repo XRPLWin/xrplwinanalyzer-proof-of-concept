@@ -36,43 +36,52 @@ class BookController extends Controller
   https://github.com/XRPL-Labs/XRPL-Orderbook-Reader/blob/0378825be82cb21402a9a719c79bfc12a88e2f31/src/index.ts
   https://github.com/XRPL-Labs/XRPL-Orderbook-Reader/blob/0378825be82cb21402a9a719c79bfc12a88e2f31/src/parser/LiquidityParser.ts#L54
   http://xlanalyzer.test/book/liquidity_check/rGQrZvndQsJV2S5cnSdiRFMPT1Fz1Ccvuj/416E696D61436F696E0000000000000000000000/1500
-
+  * @return Response [ 'price' => x.xxx ]
   */
-  public function liquidity_check(string $issuer, string $currency, $amount)
+  public function currency_rates(string $from, string $to) //(string $issuer, string $currency, $amount)
   {
+    $amount = 50;
     $r = [ 'price' => 0 ];
 
+    if($from == 'XRP')
+      $_from = [ 'currency' => 'XRP' ];
+    else {
+      $_from = explode('+',$from);
+      if(count($_from) != 2) abort(403);
+      $_from = [ 'issuer' => $_from[0], 'currency' => $_from[1]];
+    }
+
+    if($to == 'XRP')
+      $_to = [ 'currency' => 'XRP' ];
+    else {
+      $_to = explode('+',$to);
+      if(count($_to) != 2) abort(403);
+      $_to = [ 'issuer' => $_to[0], 'currency' => $_to[1]];
+    }
+
+
     $params = [
-      'taker_gets' => [ 'currency' => 'XRP' ],
-      'taker_pays' => [ 'issuer' => $issuer, 'currency' => $currency],
+      'taker_gets' => $_from,
+      'taker_pays' => $_to,
       'limit' => 50 //500
     ];
 
     $orderbook = $this->fetch_offers($params);
 
-    $test = $this->LiquidityParser($orderbook,$params,$amount);
-    dd($test);
+    $check = $this->LiquidityParser($orderbook,$params,$amount);
+
     /*$orderbookReverse = $this->fetch_offers([
       'taker_pays' => [ 'currency' => 'XRP' ],
       'taker_gets' => [ 'issuer' => $issuer, 'currency' => $currency],
       'limit' => 10 //500
     ]);*/
-
-    $finalBookLine = collect($orderbook)->where('_Capped' != null)->last();
-    //$rate =
-    dd($orderbook,$orderbookReverse);
+    $r['price'] = $check['rate'];
 
     return response()->json($r);
   }
 
   /**
-  * @return [  _ExchangeRate: number
-    _I_Spend_Capped: number
-    _I_Get_Capped: number
-    _CumulativeRate: number
-    _CumulativeRate_Cap: number
-    _Capped: boolean
-    ]
+  * @return array
   */
   private function LiquidityParser(array $offers, array $params, $tradeAmount) : array
   {
@@ -97,11 +106,7 @@ class BookController extends Controller
         $bookType = 'return';
 
     }
-    //dd($offers[0],$bookType);
-
-
     $offers_filtered = [];
-
     foreach($offers as $offer)
     {
       //TODO
@@ -109,8 +114,6 @@ class BookController extends Controller
       //ignore if (a.TakerPaysFunded === undefined || (a.TakerPaysFunded && a.TakerPaysFunded.toNumber() > 0))
       $offers_filtered[] = $offer;
     }
-
-
 
     $i = 0;
     $reduced = array_reduce($offers_filtered, function($a,$b) use ($i,$bookType,$tradeAmount) {
@@ -205,7 +208,6 @@ class BookController extends Controller
 
     },[]);
 
-    //dd($reduced);
     if($reduced['_CumulativeRate_Cap'])
       $rate = $reduced['_CumulativeRate_Cap'];
     else

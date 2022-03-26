@@ -30,7 +30,7 @@ Route::get('/account_tx/{account}', [App\Http\Controllers\Api\AccountController:
 Route::get('/server/queue', [App\Http\Controllers\Api\ServerController::class, 'queue'])->name('server.queue');
 
 #Utilities
-Route::get('/book/liquidity_check/{issuer}/{currency}/{amount}', [App\Http\Controllers\Api\BookController::class, 'liquidity_check'])->name('book.liquidity_check');
+Route::get('/currency_rates/{from}/{to}', [App\Http\Controllers\Api\BookController::class, 'currency_rates'])->name('currency_rates');
 
 #Dev routes (not for production)
 Route::get('/dev/account/analyze/{account}', [App\Http\Controllers\Api\AccountController::class, 'dev_analyze'])->name('account.dev.dev_analyze');
