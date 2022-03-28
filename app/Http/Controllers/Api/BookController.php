@@ -58,7 +58,7 @@ class BookController extends Controller
     $r['price'] = $result['rate'];
     $r['from'] = $_from;
     $r['to'] = $_to;
-    $r['amount'] = $amount;
+    //$r['amount'] = $amount;
 
     return response()->json($r);
   }

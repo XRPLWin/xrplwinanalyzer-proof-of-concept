@@ -15,11 +15,13 @@ class LiquidityParser
   */
   public function parse(array $offers, array $params, $tradeAmount = 500) : array
   {
+
     if(!count($offers))
       return ['rate' => 0, 'safe' => true, 'errors' => []];
 
     $fromIsXrp = \strtoupper($params['taker_pays']['currency']) === 'XRP' ? true:false;
     $bookType = 'source'; //source or return
+
 
     if(is_string($offers[0]['TakerPays'])) // Taker pays XRP
       $bookType = $fromIsXrp ? 'source':'return';
@@ -35,6 +37,7 @@ class LiquidityParser
         $bookType = 'return';
 
     }
+
     $offers_filtered = [];
     foreach($offers as $offer)
     {
@@ -54,7 +57,9 @@ class LiquidityParser
       $_PaysSum = $_PaysEffective + (($i > 0) ? $a[$i-1]['_I_Get'] : 0);
 
       $_cmpField = ($bookType == 'source') ? '_I_Spend_Capped':'_I_Get_Capped';
-      //dd($_cmpField);
+
+      //Big number test
+      //dd($tradeAmount +'10e-12' + 12);
 
       $_GetsSumCapped = ($i > 0 && $a[$i-1]['_cmpField'] >= $tradeAmount) ?
         $a[$i-1]['_cmpField']['_I_Spend_Capped']
