@@ -89,6 +89,9 @@ composer install --no-dev
 php artisan key:generate
 php artisan config:cache
 php artisan route:cache
+chown -R root:daemon ../
+find storage/ -type d -exec chmod 770 {} \;
+find storage/ -type f -exec chmod 760 {} \;
 ```
 
 ## Caching
