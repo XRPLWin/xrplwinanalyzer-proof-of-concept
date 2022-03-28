@@ -31,7 +31,10 @@ Route::get('/account_lines/{account}', [App\Http\Controllers\Api\AccountControll
 Route::get('/server/queue', [App\Http\Controllers\Api\ServerController::class, 'queue'])->name('server.queue');
 
 #Utilities
-Route::get('/currency_rates/{from}/{to}/{amount?}', [App\Http\Controllers\Api\BookController::class, 'currency_rates'])->name('currency_rates');
+Route::middleware(['varnish5min'])->group(function () {
+  Route::get('/currency_rates/{from}/{to}/{amount?}', [App\Http\Controllers\Api\BookController::class, 'currency_rates'])->name('currency_rates');
+});
+
 
 #Dev routes (not for production)
 Route::get('/dev/account/analyze/{account}', [App\Http\Controllers\Api\AccountController::class, 'dev_analyze'])->name('account.dev.dev_analyze');
