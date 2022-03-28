@@ -24,7 +24,7 @@ class BookController extends Controller
   */
   public function currency_rates(string $from, string $to, $amount = 500)
   {
-    $r = [ 'price' => 0 ];
+    $r = [ 'price' => 0, 'from' => false, 'to' => false];
 
     if($from == $to)
       return response()->json($r);
@@ -56,6 +56,10 @@ class BookController extends Controller
     $result = $LiquidityParser->parse($orderbook,$params,$amount);
 
     $r['price'] = $result['rate'];
+    $r['from'] = $_from;
+    $r['to'] = $_to;
+    $r['amount'] = $amount;
+
     return response()->json($r);
   }
 
