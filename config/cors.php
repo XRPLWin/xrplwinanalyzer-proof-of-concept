@@ -15,11 +15,12 @@ return [
     |
     */
 
-    'paths' => ['api/*'],
+    'paths' => ['*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    //'allowed_origins' => ['example.com', '*.example.org'],
+    'allowed_origins' => ['app.xrpl.win'],
 
     'allowed_origins_patterns' => [],
 
