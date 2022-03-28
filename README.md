@@ -76,7 +76,7 @@ Analyzer 2 then parses and inserts/updates local database.
 * MySQL DB
 * Redis
 * Varnish v4 with Tags support (optional)
-* php libs: BCMath 
+* php libs: BCMath
 
 ## Installation
 
@@ -93,6 +93,31 @@ chown -R root:daemon ../
 find storage/ -type d -exec chmod 770 {} \;
 find storage/ -type f -exec chmod 760 {} \;
 ```
+
+## Services via systemd
+
+`/etc/systemd/system/xrplwinanalyzer-queue-default.service`  
+
+```
+[Unit]
+Description=Artisan Analyzer Default Queue
+
+[Service]
+User = root
+Group = daemon
+Restart=on-failure
+WorkingDirectory=/opt/nginx/htdocs/xrplwinanalyzer
+ExecStart=/opt/php/bin/php /opt/nginx/htdocs/xrplwinanalyzer/artisan  queue:work --sleep=3 --tries=1
+
+[Install]
+WantedBy=multi-user.target
+```
+
+To reload service if configuration changed: `systemctl daemon-reload`  
+To enable on startup `systemctl enable xrplwinanalyzer-queue-default.service`  
+`systemctl [start/stop/reload/status] <domain>-queue-<laravelqueuename>.service`  
+Log: `journalctl -u xrplwinanalyzer-queue-default.service`  
+To gracefully restart laravel queue run: `php artisan queue:restart`
 
 ## Caching
 
