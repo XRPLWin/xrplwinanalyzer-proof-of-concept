@@ -1,0 +1,12 @@
+[Unit]
+Description=Artisan Analyzer Default Queue
+
+[Service]
+User = root
+Group = daemon
+Restart=on-failure
+WorkingDirectory=/opt/nginx/htdocs/xrplwinanalyzer
+ExecStart=/opt/php/bin/php /opt/nginx/htdocs/xrplwinanalyzer/artisan  queue:work --sleep=3 --tries=1
+
+[Install]
+WantedBy=multi-user.target
