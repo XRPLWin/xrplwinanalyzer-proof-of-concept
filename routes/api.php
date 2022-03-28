@@ -25,6 +25,7 @@ Route::get('/', [App\Http\Controllers\Api\InfoController::class, 'info'])->name(
 #Raw routes
 Route::get('/account_info/{account}', [App\Http\Controllers\Api\AccountController::class, 'info'])->name('account.info');
 Route::get('/account_tx/{account}', [App\Http\Controllers\Api\AccountController::class, 'tx'])->name('account.tx');
+Route::get('/account_lines/{account}', [App\Http\Controllers\Api\AccountController::class, 'lines'])->name('account.lines');
 
 #Analyzer routes
 Route::get('/server/queue', [App\Http\Controllers\Api\ServerController::class, 'queue'])->name('server.queue');

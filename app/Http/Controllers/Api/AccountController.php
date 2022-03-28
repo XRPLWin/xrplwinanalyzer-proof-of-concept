@@ -20,16 +20,8 @@ class AccountController extends Controller
     if(!$acct->synced)
     {
       $acct->account->sync();
-      dd('sync queued, respond now');
+      dd('Sync queued, please check back later, TODO respond generic json here');
     }
-
-
-
-
-
-
-
-
 
     $info = XRPL::account_info($account);
     return response()->json($info);
@@ -38,6 +30,12 @@ class AccountController extends Controller
   public function tx(string $account)
   {
     $txs = XRPL::account_tx($account);
+    return response()->json($txs);
+  }
+
+  public function lines(string $account)
+  {
+    $txs = XRPL::account_lines($account);
     return response()->json($txs);
   }
 
@@ -50,12 +48,8 @@ class AccountController extends Controller
     if(!$acct->synced)
       dd('Not synced');
 
-
     StaticAccount::analyzeData($acct->account);
     //dd($acct);
-
   }
-
-
 
 }
