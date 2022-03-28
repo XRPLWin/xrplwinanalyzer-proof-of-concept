@@ -76,6 +76,18 @@ Analyzer 2 then parses and inserts/updates local database.
 * MySQL DB
 * Redis
 * Varnish v4 with Tags support (optional)
+* php libs: BCMath 
+
+## Installation
+
+Copy .env.example to .env and setup variables
+
+```
+composer install --no-dev
+php artisan key:generate
+php artisan config:cache
+php artisan route:cache
+```
 
 ## Caching
 
