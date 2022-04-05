@@ -23,7 +23,7 @@ class Varnish5min
       $response = $response->withHeaders([
         'cache-control' => 'public, s-maxage='.$cache_seconds.', max-age='.$cache_seconds,
         'Expires' =>  date("D, d M Y H:i:s", time()+$cache_seconds).' GMT',
-        'Cache-Tags' => 'frontpage test1 test2'
+        //'Cache-Tags' => 'frontpage test1 test2'
       ]);
 
       return $response;

@@ -23,9 +23,13 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::get('/', [App\Http\Controllers\Api\InfoController::class, 'info'])->name('info');
 
 #Raw routes
-Route::get('/account_info/{account}', [App\Http\Controllers\Api\AccountController::class, 'info'])->name('account.info');
-Route::get('/account_tx/{account}', [App\Http\Controllers\Api\AccountController::class, 'tx'])->name('account.tx');
-Route::get('/account_lines/{account}', [App\Http\Controllers\Api\AccountController::class, 'lines'])->name('account.lines');
+Route::get('/account_info/{account}', [App\Http\Controllers\Api\AccountController::class, 'raw_info'])->name('account.raw_info');
+Route::get('/account_tx/{account}', [App\Http\Controllers\Api\AccountController::class, 'raw_tx'])->name('account.raw_tx');
+Route::get('/account_lines/{account}', [App\Http\Controllers\Api\AccountController::class, 'raw_lines'])->name('account.raw_lines');
+
+#Account routes
+Route::get('/account/info/{account}', [App\Http\Controllers\Api\AccountController::class, 'info'])->middleware('varnish5min')->name('account.info');
+Route::get('/account/trustlines/{account}', [App\Http\Controllers\Api\AccountController::class, 'trustlines'])->middleware('varnish5min')->name('account.trustlines');
 
 #Analyzer routes
 Route::get('/server/queue', [App\Http\Controllers\Api\ServerController::class, 'queue'])->name('server.queue');
