@@ -8,6 +8,8 @@ use App\Statics\XRPL;
 use App\Statics\Account as StaticAccount;
 use App\Models\Account;
 use App\Loaders\AccountLoader;
+use App\Models\AggregatDailyPayment;
+use Carbon\CarbonPeriod;
 
 class AccountController extends Controller
 {
@@ -35,8 +37,8 @@ class AccountController extends Controller
   public function info(string $account)
   {
     $r = [
-      'synced' => true,   //true|false
-      'type' => 'normal', //normal|issuer|exchange
+      'synced' => true,   // true|false
+      'type' => 'normal', // normal|issuer|exchange
     ];
     $acct = new AccountLoader($account);
     //dd($acct);
@@ -44,7 +46,6 @@ class AccountController extends Controller
     {
       $acct->account->sync();
       $r['synced'] = false;
-
     }
 
     $info = XRPL::account_info($account);
@@ -65,7 +66,7 @@ class AccountController extends Controller
 
     if(isset($gateway_balances['result']['obligations']) && !empty($gateway_balances['result']['obligations']))
       $r['type'] = 'issuer';
-    //dd($info,$r,$gateway_balances);
+
     return response()->json($r);
   }
 
@@ -89,6 +90,63 @@ class AccountController extends Controller
     return response()->json($trustlines);
   }
 
+  /**
+  * Chart data spending in XRP for account
+  */
+  public function chart_spending(string $account)
+  {
+    $acct = new AccountLoader($account);
+    if(!$acct->synced)
+      return response()->json([]);
+
+    $end = now();
+    $start = now()->addDays(-330);
+
+  //  dd($acct->account);
+    $aggr = AggregatDailyPayment::select('amount','balance','date')
+      ->where('account_id',$acct->account->id)
+      ->whereBetween('date',[$start,$end])
+      ->orderBy('date','asc')
+      ->get();
+
+    //Normalize ranges
+    $range = new CarbonPeriod($start,'1 day',$end);
+    //dd($range);
+
+    $r = [];
+    $balance = 0;
+    //get starting balance
+    $startingBalance = AggregatDailyPayment::select('balance')
+      ->where('account_id',$acct->account->id)
+      ->where('date', '<', $start)
+      ->orderBy('date','desc')
+      ->first();
+    if($startingBalance)
+      $balance = $startingBalance->balance;
+    foreach($range as $day)
+    {
+      //dd($day);
+      $data = $aggr->where('date',$day->startOfDay())->first();
+      if(!$data) {
+        $r[] = [
+          $day->timestamp,
+          0,
+          $balance
+        ];
+      }
+      else {
+        $r[] = [
+          $day->timestamp,
+          $data->amount,
+          $data->balance,
+        ];
+        $balance = $data->balance;
+      }
+    }
+
+    return response()->json($r);
+  }
+
 
   public function dev_analyze(string $account)
   {
@@ -99,7 +157,7 @@ class AccountController extends Controller
       dd('Not synced');
 
     StaticAccount::analyzeData($acct->account);
-    //dd($acct);
+    dd($acct);
   }
 
 }

@@ -18,10 +18,19 @@ class InfoController extends Controller
       'documentation' => 'TODO',
       //'release-notes' => 'TODO',
       'endpoints' => [
-        //TODO
         [
           'action' => 'Get account info',
-          'route' => '/account_info/{account}',
+          'route' => '/account/info/{account}',
+          'method' => 'GET'
+        ],
+        [
+          'action' => 'Trustline info for account',
+          'route' => '/account/trustlines/{account}',
+          'method' => 'GET'
+        ],
+        [
+          'action' => 'Chart data spending in XRP for account',
+          'route' => '/account/chart/spending/{account}',
           'method' => 'GET'
         ],
         [

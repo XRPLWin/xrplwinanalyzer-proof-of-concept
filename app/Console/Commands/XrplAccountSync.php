@@ -11,6 +11,7 @@ use App\Models\Activation;
 use App\Models\TransactionPayment;
 use App\Models\TransactionTrustset;
 use App\Models\TransactionAccountset;
+use App\Models\TransactionOffer;
 
 
 class XrplAccountSync extends Command
@@ -170,11 +171,69 @@ class XrplAccountSync extends Command
     }
 
     /**
+    * Executed offer
+    */
+    private function processTransaction_OfferCreate(Account $account, array $tx, array $meta)
+    {
+      $txhash = $tx['hash'];
+
+      $TransactionOfferCheck = TransactionTrustset::where('txhash',$txhash)->count();
+      if($TransactionOfferCheck)
+        return null; //nothing to do, already stored
+
+
+
+
+      if(isset($meta['AffectedNodes']) && is_array($meta['AffectedNodes'])) {
+
+        foreach($meta['AffectedNodes'] as $anode) {
+
+          if(isset($anode['ModifiedNode']))
+          {
+
+          //  if(!isset($anode['ModifiedNode']['FinalFields']['Account'] ))
+          //    dd($anode);
+
+          //if($anode['ModifiedNode']['LedgerEntryType'] == 'AccountRoot' && !isset($anode['ModifiedNode']['FinalFields']))
+          //  dd($anode);
+
+            if($anode['ModifiedNode']['LedgerEntryType'] == 'AccountRoot' &&
+                isset($anode['ModifiedNode']['FinalFields']) &&
+                $anode['ModifiedNode']['FinalFields']['Account'] == $account->account) {
+              $newBalance = (int)$anode['ModifiedNode']['FinalFields']['Balance']; //drops
+              $oldBalance = (int)$anode['ModifiedNode']['PreviousFields']['Balance']; //drops
+              $gainLossXrp = (($newBalance - $oldBalance)+$tx['Fee']) / 1000000;
+
+              $TransactionOffer = new TransactionOffer;
+              $TransactionOffer->txhash = $txhash;
+              $TransactionOffer->account_id = $account->id;
+              $TransactionOffer->fee = $tx['Fee']; //in drops
+              $TransactionOffer->time_at = ripple_epoch_to_carbon($tx['date']);
+              $TransactionOffer->amount = $gainLossXrp;
+              if($TransactionOffer->amount !== 0)
+                $TransactionOffer->save();
+
+              //dd($txhash,$newBalance,$oldBalance,($newBalance - $oldBalance));
+            }
+            //dd($anode);
+          }
+        }
+      }
+
+      return null;
+    }
+
+    /**
     * Payment to or from in any currency.
     */
     private function processTransaction_Payment(Account $account, array $tx, array $meta)
     {
       $txhash = $tx['hash'];
+
+      // Check existing tx
+      $TransactionPaymentCheck = TransactionPayment::where('txhash',$txhash)->count();
+      if($TransactionPaymentCheck)
+        return null; //nothing to do, already stored
 
       $is_partialPayment = false;
       if(isset($tx['Flags']) && xrpl_has_flag($tx['Flags'],131072)) {
@@ -185,10 +244,7 @@ class XrplAccountSync extends Command
       $source_tag = isset($tx['SourceTag']) ? $tx['SourceTag']:null;
       //$this->info($tx['DestinationTag']);
       //dd($tx);
-      // Check existing tx
-      $TransactionPaymentCheck = TransactionPayment::where('txhash',$txhash)->count();
-      if($TransactionPaymentCheck)
-        return null; //nothing to do, already stored
+
 
       if($account->account == $tx['Account'])
       {
@@ -335,10 +391,7 @@ class XrplAccountSync extends Command
     }
 
 
-    private function processTransaction_OfferCreate(Account $account, array $tx, array $meta)
-    {
-      return null;
-    }
+
 
     private function processTransaction_OfferCancel(Account $account, array $tx, array $meta)
     {
