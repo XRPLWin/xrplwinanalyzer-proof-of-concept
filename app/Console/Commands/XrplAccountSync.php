@@ -72,7 +72,7 @@ class XrplAccountSync extends Command
       if(!$account)
         $account = StaticAccount::GetOrCreate($address,$this->ledger_current);
 
-      //dd($account );
+      
 
       $ledger_index_max = $this->ledger_current; //from current ledger
 
